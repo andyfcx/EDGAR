@@ -22,8 +22,6 @@ headers = {
 EBITDA_pattern = re.compile("EBITDA", re.IGNORECASE)
 EBIT_pattern = re.search("EBIT", re.IGNORECASE)
 
-
-
 init = pd.read_excel("./test-url.xls")
 url_col_name = init.columns[0]
 
@@ -50,8 +48,11 @@ def extract(url):
         if 'EBITDA' in item:
             print(i)
             print(p_list[i])
+    
+    ebida = result1[0] if result1 else ""
+    ebit = result2[0] if result2 else ""
 
-    return result1[0], result2[0] # note index error
+    return ebida, ebit
     
 for url in url_list:
     try:
