@@ -95,4 +95,4 @@ df["EBITDA_paragraph"] = EBITDA_paragraph
 df["EBIT_wordcount"] = EBIT_wordcount
 df["EBIT_paragraph"] = EBIT_paragraph
 
-init.to_csv("EBITDA.csv", index=False)
+df.to_csv("EBITDA.csv", index=False)
