@@ -4,6 +4,7 @@ import re, os
 import pandas as pd
 from time import sleep
 from random import randint
+from tqdm import tqdm
 
 # Done [Step 1] 我目前的dataset中有一個變數url (幾千筆)，
 # 變數內容是一堆美國上市公司在SEC EDGAR網站上傳文件的「網址」(含html原始碼)，如附檔( .xls中url這個變數)。
@@ -31,10 +32,6 @@ def extract(url):
     ebitda = parse("EBITDA", p_list, res)
     ebit = parse("EBIT", p_list, res)
 
-    # result2 = re.findall("EBIT", string_clean(res.text), re.IGNORECASE)
-    # EBIT_pattern = re.compile("EBIT", re.IGNORECASE)
-    # match2 = list(filter(EBIT_pattern.search, p_list))
-    # print("Count of EBIT", len(result2))
     return ebitda, ebit
 
 def parse(keyword, p_list, res):
@@ -53,52 +50,49 @@ def test():
     print(ebida)
     print(ebit)
 
-def main():
+
     
-    init = pd.read_excel("./test-url.xls")
-    url_col_name = init.columns[0]
-    
-    if not os.path.isfile("tmp_url_list"):
-        url_list = list(init[url_col_name])
-        done_list = []
-    else:
-        print("Use cached urls")
-        with open("tmp_url_list") as f:
-            url_list = f.read()
+init = pd.read_excel("./test-url.xls")
+url_col_name = init.columns[0]
 
-    EBITDA_wordcount = []
-    EBITDA_paragraph = []
-    EBIT_wordcount = []
-    EBIT_paragraph = []
+if not os.path.isfile("tmp_url_list"):
+    url_list = list(init[url_col_name])
+    done_list = []
+else:
+    print("Use cached urls")
+    with open("tmp_url_list") as f:
+        url_list = f.read()
 
-    for url in url_list:
-        try:
-            ebitda, ebit = extract(url)
+EBITDA_wordcount = []
+EBITDA_paragraph = []
+EBIT_wordcount = []
+EBIT_paragraph = []
 
-            done_list.append(url)
-            url_list.remove(url)
-            t = randint(1,3)
-            sleep(t)
-            print(f"Sleep for {t} secs.")
-            
-        except Exception:
-            with open('tmp_url_list','w') as f:
-                for item in url_list:
-                    f.write(f"{item}\n")
-                print("Exception Handled, saved unfinished works")
-            raise Exception
-        EBITDA_wordcount.append(ebitda[0])
-        EBITDA_paragraph.append(ebitda[1])
-        EBIT_wordcount.append(ebit[0])
-        EBIT_paragraph.append(ebit[1])
+for url in tqdm(url_list[:1250]):
+    try:
+        ebitda, ebit = extract(url)
+
+        done_list.append(url)
+        url_list.remove(url)
+        # t = randint(1,3)
+        # sleep(t)
+        # print(f"Sleep for {t} secs.")
         
-    init["EBITDA_wordcount"] = EBITDA_wordcount
-    init["EBITDA_paragraph"] = EBITDA_paragraph
-    init["EBIT_wordcount"] = EBIT_wordcount
-    init["EBIT_paragraph"] = EBIT_paragraph
+    except Exception:
+        with open('tmp_url_list','w') as f:
+            for item in url_list:
+                f.write(f"{item}\n")
+            print("Exception Handled, saved unfinished works")
+        raise Exception
+    EBITDA_wordcount.append(ebitda[0])
+    EBITDA_paragraph.append(ebitda[1])
+    EBIT_wordcount.append(ebit[0])
+    EBIT_paragraph.append(ebit[1])
+df = pd.DataFrame()
+df["url"] = url_list[:1250]
+df["EBITDA_wordcount"] = EBITDA_wordcount
+df["EBITDA_paragraph"] = EBITDA_paragraph
+df["EBIT_wordcount"] = EBIT_wordcount
+df["EBIT_paragraph"] = EBIT_paragraph
 
-    init.to_csv("EBITDA.csv", index=False)
-
-if __name__ == "__main__":
-    main()
-    # test()
+init.to_csv("EBITDA.csv", index=False)
