@@ -15,25 +15,13 @@ from random import randint
 # 擷取它第一次出現位置的那個段落。這個步驟難度若很高的話就算了。
 
 
-headers = {
-    'User-Agent': "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.2.149.27 Safari/525.13"
-}
-
-init = pd.read_excel("./test-url.xls")
-url_col_name = init.columns[0]
-
-if not os.path.isfile("tmp_url_list"):
-    url_list = list(init[url_col_name])
-    done_list = []
-else:
-    print("Use cached urls")
-    with open("tmp_url_list") as f:
-        url_list = f.read()
-
 def string_clean(string):
     return ' '.join(string.replace('\n',' ').replace('\t',' ').split())
 
 def extract(url):
+    headers = {
+    'User-Agent': "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.2.149.27 Safari/525.13"
+}
     res = requests.get(url, headers=headers)
     soup = BeautifulSoup(res.text, "lxml")
 
@@ -57,31 +45,60 @@ def parse(keyword, p_list, res):
     match1 = list(filter(keyword_pattern.search, p_list))
     
     paragraph = match1[0] if match1 else ""
-
     print(f"Count of {keyword}", len(result1))
-
     return (word_count, paragraph)
 
 def test():
     ebida, ebit = extract("https://www.sec.gov/Archives/edgar/data/3116/000115752310001572/0001157523-10-001572.txt")
-    # print(ebida)
-    # print(ebit)
+    print(ebida)
+    print(ebit)
 
 def main():
+    
+    init = pd.read_excel("./test-url.xls")
+    url_col_name = init.columns[0]
+    
+    if not os.path.isfile("tmp_url_list"):
+        url_list = list(init[url_col_name])
+        done_list = []
+    else:
+        print("Use cached urls")
+        with open("tmp_url_list") as f:
+            url_list = f.read()
+
+    EBITDA_wordcount = []
+    EBITDA_paragraph = []
+    EBIT_wordcount = []
+    EBIT_paragraph = []
+
     for url in url_list:
         try:
-            extract(url)
+            ebitda, ebit = extract(url)
+
             done_list.append(url)
             url_list.remove(url)
-
-            sleep(randint(3,8))
+            t = randint(1,3)
+            sleep(t)
+            print(f"Sleep for {t} secs.")
+            
         except Exception:
             with open('tmp_url_list','w') as f:
                 for item in url_list:
                     f.write(f"{item}\n")
                 print("Exception Handled, saved unfinished works")
             raise Exception
+        EBITDA_wordcount.append(ebitda[0])
+        EBITDA_paragraph.append(ebitda[1])
+        EBIT_wordcount.append(ebit[0])
+        EBIT_paragraph.append(ebit[1])
+        
+    init["EBITDA_wordcount"] = EBITDA_wordcount
+    init["EBITDA_paragraph"] = EBITDA_paragraph
+    init["EBIT_wordcount"] = EBIT_wordcount
+    init["EBIT_paragraph"] = EBIT_paragraph
+
+    init.to_csv("EBITDA.csv", index=False)
 
 if __name__ == "__main__":
-    # main()
-    test()
+    main()
+    # test()
